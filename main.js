@@ -8,6 +8,7 @@ var GameObject = /** @class */ (function () {
             map: texture
         });
         this.mesh = new THREE.Mesh(this.plane, this.material);
+        this.velocity = new THREE.Vector3(0, 0, 0);
     }
     GameObject.prototype.setX = function (x) {
         this.mesh.position.x = x;
@@ -24,6 +25,9 @@ var GameObject = /** @class */ (function () {
     GameObject.prototype.rotateBy = function (angle) {
         this.mesh.setRotationFromEuler(new THREE.Euler(0, 0, this.mesh.rotation.z + angle, 'XYZ'));
     };
+    GameObject.prototype.update = function (deltaTime) {
+        this.mesh.position.add(new THREE.Vector3(this.velocity.x * deltaTime, this.velocity.y * deltaTime, this.velocity.z * deltaTime));
+    };
     return GameObject;
 }());
 var Game = /** @class */ (function () {
@@ -36,7 +40,12 @@ var Game = /** @class */ (function () {
         this.objects = new Array();
         for (var i = 0; i < 64; ++i) {
             this.objects.push(new GameObject(THREE.ImageUtils.loadTexture("food/food (" + (i + 1) + ").png")));
-            this.objects[this.objects.length - 1].setX(i % 8).setY(Math.floor(i / 8)).setZ(-10);
+            this.objects[this.objects.length - 1]
+                .setX(i % 8 - 13)
+                .setY(Math.floor(i / 8) - 7)
+                .setZ(-10);
+            this.objects[i].velocity.x = 6 * Math.random();
+            this.objects[i].velocity.y = 6 * Math.random();
         }
     }
     Game.prototype.createScene = function () {
@@ -56,9 +65,9 @@ var Game = /** @class */ (function () {
     Game.prototype.render = function (timestamp) {
         var time = timestamp / 1000;
         var deltaTime = time - this.lastStamp;
-        //console.log(deltaTime);
         for (var i = 0; i < 64; ++i) {
             this.objects[i].rotateBy(deltaTime);
+            this.objects[i].update(deltaTime);
         }
         this.lastStamp = time;
         this.renderer.render(this.scene, this.camera);

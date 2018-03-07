@@ -3,6 +3,8 @@ class GameObject {
 	public material: THREE.MeshBasicMaterial;
 	public mesh: THREE.Mesh;
 
+	public velocity: THREE.Vector3;
+
 	public constructor(texture: THREE.Texture) {
 		this.plane			= new THREE.PlaneGeometry(1, 1, 1, 1);
 		this.material		= new THREE.MeshBasicMaterial({
@@ -12,6 +14,8 @@ class GameObject {
 			map:			texture
 		});
 		this.mesh			= new THREE.Mesh(this.plane, this.material);
+
+		this.velocity		= new THREE.Vector3(0, 0, 0);
 	}
 
 	public setX(x: number): GameObject {
@@ -33,6 +37,14 @@ class GameObject {
 				0, 0, this.mesh.rotation.z + angle,
 			'XYZ')
 		);
+	}
+
+	public update(deltaTime: number): void {
+		this.mesh.position.add(new THREE.Vector3(
+			this.velocity.x * deltaTime,
+			this.velocity.y * deltaTime,
+			this.velocity.z * deltaTime
+		));
 	}
 }
 
@@ -62,7 +74,12 @@ class Game {
 					THREE.ImageUtils.loadTexture("food/food (" + (i + 1) + ").png")
 				)
 			);
-			this.objects[this.objects.length - 1].setX(i % 8).setY(Math.floor(i / 8)).setZ(-10);
+			this.objects[this.objects.length - 1]
+				.setX(i % 8 - 13)
+				.setY(Math.floor(i / 8) - 7)
+				.setZ(-10);
+			this.objects[i].velocity.x	= 6 * Math.random();
+			this.objects[i].velocity.y	= 6 * Math.random();
 		}
 	}
 
@@ -89,9 +106,9 @@ class Game {
 		let time:number			= timestamp / 1000;
 		let deltaTime:number	= time - this.lastStamp;
 
-		//console.log(deltaTime);
 		for(let i: number = 0; i < 64; ++i) {
 			this.objects[i].rotateBy(deltaTime);
+			this.objects[i].update(deltaTime);
 		}
 
 		this.lastStamp			= time;
