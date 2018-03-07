@@ -1,9 +1,10 @@
 class GameObject {
-	public plane: THREE.PlaneGeometry;
-	public material: THREE.MeshBasicMaterial;
-	public mesh: THREE.Mesh;
+	private plane: THREE.PlaneGeometry;
+	private material: THREE.MeshBasicMaterial;
+	private mesh: THREE.Mesh;
 
 	public velocity: THREE.Vector3;
+	private gravity: number;
 
 	public constructor(texture: THREE.Texture) {
 		this.plane			= new THREE.PlaneGeometry(1, 1, 1, 1);
@@ -16,6 +17,7 @@ class GameObject {
 		this.mesh			= new THREE.Mesh(this.plane, this.material);
 
 		this.velocity		= new THREE.Vector3(0, 0, 0);
+		this.gravity		= 1;
 	}
 
 	public setX(x: number): GameObject {
@@ -31,6 +33,14 @@ class GameObject {
 		return this;
 	}
 
+	public addToScene(scene: THREE.Scene): void {
+		scene.add(this.mesh);
+	}
+
+	public setGravity(newGravity: number): void {
+		this.gravity	= newGravity;
+	}
+
 	public rotateBy(angle: number): void {
 		this.mesh.setRotationFromEuler(
 			new THREE.Euler(
@@ -40,6 +50,7 @@ class GameObject {
 	}
 
 	public update(deltaTime: number): void {
+		this.velocity.y	-= this.gravity;
 		this.mesh.position.add(new THREE.Vector3(
 			this.velocity.x * deltaTime,
 			this.velocity.y * deltaTime,
@@ -78,8 +89,10 @@ class Game {
 				.setX(i % 8 - 13)
 				.setY(Math.floor(i / 8) - 7)
 				.setZ(-10);
-			this.objects[i].velocity.x	= 6 * Math.random();
-			this.objects[i].velocity.y	= 6 * Math.random();
+			this.objects[i].velocity.x	= 10 * Math.random();
+			this.objects[i].velocity.y	= 40 * Math.random();
+
+			this.objects[i].setGravity(9.81 / 20);
 		}
 	}
 
@@ -90,7 +103,7 @@ class Game {
 		this.camera.position	= new THREE.Vector3(0, 0, 0);
 
 		for(let i: number = 0; i < 64; ++i) {
-			this.scene.add(this.objects[i].mesh);
+			this.objects[i].addToScene(this.scene);
 		}
 
 		this.scene.add(this.camera);

@@ -9,6 +9,7 @@ var GameObject = /** @class */ (function () {
         });
         this.mesh = new THREE.Mesh(this.plane, this.material);
         this.velocity = new THREE.Vector3(0, 0, 0);
+        this.gravity = 1;
     }
     GameObject.prototype.setX = function (x) {
         this.mesh.position.x = x;
@@ -22,10 +23,14 @@ var GameObject = /** @class */ (function () {
         this.mesh.position.z = z;
         return this;
     };
+    GameObject.prototype.setGravity = function (newGravity) {
+        this.gravity = newGravity;
+    };
     GameObject.prototype.rotateBy = function (angle) {
         this.mesh.setRotationFromEuler(new THREE.Euler(0, 0, this.mesh.rotation.z + angle, 'XYZ'));
     };
     GameObject.prototype.update = function (deltaTime) {
+        this.velocity.y -= this.gravity;
         this.mesh.position.add(new THREE.Vector3(this.velocity.x * deltaTime, this.velocity.y * deltaTime, this.velocity.z * deltaTime));
     };
     return GameObject;
@@ -44,8 +49,9 @@ var Game = /** @class */ (function () {
                 .setX(i % 8 - 13)
                 .setY(Math.floor(i / 8) - 7)
                 .setZ(-10);
-            this.objects[i].velocity.x = 6 * Math.random();
-            this.objects[i].velocity.y = 6 * Math.random();
+            this.objects[i].velocity.x = 10 * Math.random();
+            this.objects[i].velocity.y = 40 * Math.random();
+            this.objects[i].setGravity(9.81 / 20);
         }
     }
     Game.prototype.createScene = function () {
