@@ -38,7 +38,7 @@ class Game {
 
 	private lastStamp: number;
 
-	private testObj: GameObject;
+	private objects: Array<GameObject>;
 
 	public constructor() {
 		this.sizeX		= window.innerWidth * 0.99;
@@ -47,11 +47,15 @@ class Game {
 		this.camera		= new THREE.PerspectiveCamera(75, this.sizeX / this.sizeY, 0.1, 1000);
 		this.renderer	= new THREE.WebGLRenderer();
 
-
-		this.testObj			= new GameObject(
-			THREE.ImageUtils.loadTexture("food/food (1).png")
-		);
-		this.testObj.setX(0).setY(0).setZ(-10);
+		this.objects	= new Array();
+		for(let i: number = 0; i < 64; ++i) {
+			this.objects.push(
+				new GameObject(
+					THREE.ImageUtils.loadTexture("food/food (" + (i + 1) + ").png")
+				)
+			);
+			this.objects[this.objects.length - 1].setX(i % 8).setY(Math.floor(i / 8)).setZ(-10);
+		}
 	}
 
 	public createScene(): void {
@@ -60,7 +64,9 @@ class Game {
 
 		this.camera.position	= new THREE.Vector3(0, 0, 0);
 
-		this.scene.add(this.testObj.mesh);
+		for(let i: number = 0; i < 64; ++i) {
+			this.scene.add(this.objects[i].mesh);
+		}
 
 		this.scene.add(this.camera);
 		this.camera.lookAt(this.scene.position);
