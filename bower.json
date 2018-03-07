@@ -1,0 +1,26 @@
+{
+  "name": "Game2D",
+  "authors": [
+    "Zbigniew Cebula <rrrafalon@gmail.com>"
+  ],
+  "description": "Simple 2D Game",
+  "main": "index.html",
+  "keywords": [
+    "game",
+    "2d",
+    "three",
+    "typescript"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "three.js": "threejs#*"
+  }
+}
