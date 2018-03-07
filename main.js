@@ -21,6 +21,9 @@ var GameObject = /** @class */ (function () {
         this.mesh.position.z = z;
         return this;
     };
+    GameObject.prototype.rotateBy = function (angle) {
+        this.mesh.setRotationFromEuler(new THREE.Euler(0, 0, this.mesh.rotation.z + angle, 'XYZ'));
+    };
     return GameObject;
 }());
 var Game = /** @class */ (function () {
@@ -51,9 +54,12 @@ var Game = /** @class */ (function () {
         this.render(timestamp);
     };
     Game.prototype.render = function (timestamp) {
-        var time = timestamp;
+        var time = timestamp / 1000;
         var deltaTime = time - this.lastStamp;
         //console.log(deltaTime);
+        for (var i = 0; i < 64; ++i) {
+            this.objects[i].rotateBy(deltaTime);
+        }
         this.lastStamp = time;
         this.renderer.render(this.scene, this.camera);
     };

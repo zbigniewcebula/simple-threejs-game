@@ -26,6 +26,14 @@ class GameObject {
 		this.mesh.position.z	= z;
 		return this;
 	}
+
+	public rotateBy(angle: number): void {
+		this.mesh.setRotationFromEuler(
+			new THREE.Euler(
+				0, 0, this.mesh.rotation.z + angle,
+			'XYZ')
+		);
+	}
 }
 
 class Game {
@@ -78,10 +86,13 @@ class Game {
 	}
 
 	private render(timestamp: number): void {
-		let time:number			= timestamp;
+		let time:number			= timestamp / 1000;
 		let deltaTime:number	= time - this.lastStamp;
 
 		//console.log(deltaTime);
+		for(let i: number = 0; i < 64; ++i) {
+			this.objects[i].rotateBy(deltaTime);
+		}
 
 		this.lastStamp			= time;
 		this.renderer.render(this.scene, this.camera);
