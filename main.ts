@@ -131,7 +131,7 @@ class GameObject {
 		}
 		if (this.torque > 0) {
 			this.velocity.x	= (1 - this.torque) * this.velocity.x;
-			this.velocity.y	= (1 - this.torque) * this.velocity.y;
+			//this.velocity.y	= (1 - this.torque) * this.velocity.y;
 			this.velocity.z	= (1 - this.torque) * this.velocity.z;
 		}
 	}
@@ -181,23 +181,6 @@ class Game {
 		Game.player.torque	= 0.2;
 
 		this.objects		= new Array();
-		/*
-		for(let i: number = 0; i < 64; ++i) {
-			this.objects.push(
-				new GameObject(
-					THREE.ImageUtils.loadTexture("food/food (" + (i + 1) + ").png")
-				)
-			);
-			this.objects[this.objects.length - 1]
-				.setX(i % 8 - 13)
-				.setY(Math.floor(i / 8) - 7)
-				.setZ(-10);
-			this.objects[i].velocity.x	= 10 * Math.random();
-			this.objects[i].velocity.y	= 40 * Math.random();
-
-			this.objects[i].setGravity(9.81 / 20);
-		}
-		*/
 	}
 
 	public spawnRandomFood(): void {
@@ -213,7 +196,9 @@ class Game {
 		tempObj.setX((Math.random() * 26) - 13).setY(9).setZ(-10);
 		tempObj.rotationSpeed	= (Math.random() - 0.5) * 0.1;
 
-		tempObj.velocity.x		= 20 * (Math.random() - 0.5);
+		tempObj.velocity.x		= (0.75 + Math.random() * 0.25) * 20;
+		tempObj.velocity.x		= tempObj.velocity.x * (Math.random() < 0.5? -1: 1);
+		tempObj.torque			= 0.001;
 
 		tempObj.setGravity(9.81 / 30);
 		tempObj.addToScene(this.scene);
@@ -246,6 +231,9 @@ class Game {
 				this.objects[i].dispose();
 				delete this.objects[i];
 				this.objects.splice(i, 1);
+			}
+			if (Math.abs(this.objects[i].getX()) > 13) {
+				this.objects[i].velocity.x	*= -0.8;
 			}
 		}
 		Game.player.update(deltaTime);
