@@ -4,6 +4,7 @@ class GameObject {
 	private mesh: THREE.Mesh;
 
 	public velocity: THREE.Vector3;
+	public rotationSpeed: number;
 	private gravity: number;
 
 	public constructor(texture: THREE.Texture) {
@@ -18,6 +19,7 @@ class GameObject {
 
 		this.velocity		= new THREE.Vector3(0, 0, 0);
 		this.gravity		= 1;
+		this.rotationSpeed	= 0;
 	}
 
 	public setX(x: number): GameObject {
@@ -56,10 +58,15 @@ class GameObject {
 			this.velocity.y * deltaTime,
 			this.velocity.z * deltaTime
 		));
+		if (this.rotationSpeed != 0) {
+			this.rotateBy(this.rotationSpeed);
+		}
 	}
 }
 
 class Game {
+	static current: Game;
+
 	private scene: THREE.Scene;
 	private camera: THREE.PerspectiveCamera;
 	private renderer: THREE.WebGLRenderer;
@@ -72,6 +79,8 @@ class Game {
 	private objects: Array<GameObject>;
 
 	public constructor() {
+		Game.current	= this;
+
 		this.sizeX		= window.innerWidth * 0.99;
 		this.sizeY		= window.innerHeight * 0.99;
 		this.scene		= new THREE.Scene();
@@ -79,6 +88,7 @@ class Game {
 		this.renderer	= new THREE.WebGLRenderer();
 
 		this.objects	= new Array();
+		/*
 		for(let i: number = 0; i < 64; ++i) {
 			this.objects.push(
 				new GameObject(
@@ -94,6 +104,24 @@ class Game {
 
 			this.objects[i].setGravity(9.81 / 20);
 		}
+		*/
+	}
+
+	public spawnRandomFood(): void {
+		let tempObj: GameObject = new GameObject(
+			THREE.ImageUtils.loadTexture("food/food ("
+				+
+				Math.floor(1 + (Math.random() * 64))
+				+
+				").png"
+			)
+		);
+		tempObj.setX((Math.random() * 26) - 13).setY(9).setZ(-10);
+		tempObj.rotationSpeed	= (Math.random() - 0.5) * 0.1;
+
+		tempObj.setGravity(9.81 / 30);
+		tempObj.addToScene(this.scene);
+		this.objects.push(tempObj);
 	}
 
 	public createScene(): void {
@@ -101,10 +129,6 @@ class Game {
 		document.body.appendChild(this.renderer.domElement);
 
 		this.camera.position	= new THREE.Vector3(0, 0, 0);
-
-		for(let i: number = 0; i < 64; ++i) {
-			this.objects[i].addToScene(this.scene);
-		}
 
 		this.scene.add(this.camera);
 		this.camera.lookAt(this.scene.position);
@@ -119,18 +143,44 @@ class Game {
 		let time:number			= timestamp / 1000;
 		let deltaTime:number	= time - this.lastStamp;
 
-		for(let i: number = 0; i < 64; ++i) {
-			this.objects[i].rotateBy(deltaTime);
+		for(let i: number = 0; i < this.objects.length; ++i) {
 			this.objects[i].update(deltaTime);
 		}
 
 		this.lastStamp			= time;
 		this.renderer.render(this.scene, this.camera);
 	}
+
+	public input(event: KeyboardEvent): void {
+		switch(event.keyCode) {
+			case(37): {	//Left
+				break;
+			}
+			case(38): {	//Up
+				break;
+			}
+			case(39): {	//Right
+				break;
+			}
+			case(40): {	//Down
+				break;
+			}
+			case(32): {	//Space
+				Game.current.spawnRandomFood();
+				break;
+			}
+			default: {
+				console.log("Pressed: " + event.keyCode);
+			}
+		}
+	}
 }
 
 window.onload = function() {
 	let game = new Game();
 	game.createScene();
+
+	document.addEventListener('keydown', game.input);
+
 	game.animate(0);
 }
