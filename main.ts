@@ -2,8 +2,9 @@ class Animation {
 	public texture: THREE.Texture;
 	private frames: number;
 
-	private time: number;
-	private timer: number;
+	private delay: number;
+	private frameTime: number;
+	private dupa: number;
 	private current: number;
 
 	private constOffsetX: number;
@@ -16,31 +17,37 @@ class Animation {
 		duration: number = 1,
 		offsetX: number = 0, offsetY: number = 0
 	) {
-		_texture.wrapS 		= THREE.RepeatWrapping;
-		_texture.wrapT 		= THREE.RepeatWrapping;
-		_texture.repeat.set(1 / frameAmountX, 1 / frameAmountY);
-		this.texture				= _texture;
-		this.texture.needsUpdate	= true;
 
-		this.time			= duration;
-		this.timer			= 0;
+		this.delay			= duration;
+		this.frameTime		= 0;
 		this.current		= 0;
 		this.frames			= animFrames;
 
-		this.constOffsetX		= offsetX / frameAmountX;
-		this.constOffsetY		= offsetY / frameAmountY;
+		this.constOffsetX	= offsetX / frameAmountX;
+		this.constOffsetY	= offsetY / frameAmountY;
+
+		_texture.wrapS 		= THREE.RepeatWrapping;
+		_texture.wrapT 		= THREE.RepeatWrapping;
+		_texture.repeat.set(1 / frameAmountX, 1 / frameAmountY);
+		this.texture		= _texture;
+
+		this.dupa = 0;
 	}
 
 	public update(deltaTime: number): void {
-		this.timer	+= deltaTime;
-		if (this.timer > this.time) {
+		//TypeScript tries to sabotage my numbers!!!
+		let dt: number	= deltaTime;
+		if (isNaN(this.frameTime))	this.frameTime = 0;
+		//ITs ANNOYING!
+		this.frameTime	+= dt;
+		if (this.frameTime > this.delay) {
 			this.current			+= 1;
 			if (this.current >= this.frames) {
 				this.current		= 0;
 			}
-			this.timer				= 0;
+			this.frameTime				= 0;
 		}
-		this.texture.offset.x		= this.constOffsetX + this.current;
+		this.texture.offset.x		= (this.constOffsetX + this.current) / this.frames;
 		this.texture.offset.y		= this.constOffsetY;
 	}
 
@@ -61,11 +68,16 @@ class GameObject {
 	public rotationSpeed: number;
 	private gravity: number;
 
-	public constructor(animation: Animation) {
+	private name: string;
+
+	public constructor(
+		animation: Animation,
+		sizeX: number = 1, sizeY: number = 1
+	) {
 		animation.texture.magFilter	= THREE.NearestFilter;
 
 		this.anim			= animation;
-		this.plane			= new THREE.PlaneGeometry(1, 1, 1, 1);
+		this.plane			= new THREE.PlaneGeometry(sizeX, sizeY, 1, 1);
 		this.material		= new THREE.MeshBasicMaterial({
 			color:			0xFFFFFF,
 			side:			THREE.DoubleSide,
@@ -73,6 +85,7 @@ class GameObject {
 			map:			animation.texture
 		});
 		this.mesh			= new THREE.Mesh(this.plane, this.material);
+		this.mesh.name		= this.name;	
 
 		this.velocity		= new THREE.Vector3(0, 0, 0);
 		this.gravity		= 1;
@@ -119,7 +132,7 @@ class GameObject {
 	}
 
 	public update(deltaTime: number): void {
-		this.anim.update(deltaTime);
+		this.anim.update(deltaTime * 1000);
 		this.velocity.y	-= this.gravity;
 		this.mesh.position.add(new THREE.Vector3(
 			this.velocity.x * deltaTime,
@@ -134,6 +147,13 @@ class GameObject {
 			//this.velocity.y	= (1 - this.torque) * this.velocity.y;
 			this.velocity.z	= (1 - this.torque) * this.velocity.z;
 		}
+	}
+
+	public flipLeft(): void {
+		this.mesh.rotation.y	= 3.14;
+	}
+	public flipRight(): void {
+		this.mesh.rotation.y	= 0;
 	}
 
 	public dispose(): void {
@@ -174,9 +194,10 @@ class Game {
 				4, 1,
 				100,
 				0, 0
-			)
+			),
+			4, 4
 		);
-		Game.player.setX(0).setY(0).setZ(-10).setGravity(0);
+		Game.player.setX(0).setY(-5).setZ(-10).setGravity(0);
 		Game.player.addToScene(this.scene);
 		Game.player.torque	= 0.2;
 
@@ -224,18 +245,23 @@ class Game {
 		let time:number			= timestamp / 1000;
 		let deltaTime:number	= time - this.lastStamp;
 
+		/*
 		for(let i: number = 0; i < this.objects.length; ++i) {
 			this.objects[i].update(deltaTime);
+
+			//Debounce
+			if (Math.abs(this.objects[i].getX()) > 13) {
+				this.objects[i].velocity.x	*= -0.8;
+			}
 
 			if (this.objects[i].getY() < -10) {
 				this.objects[i].dispose();
 				delete this.objects[i];
 				this.objects.splice(i, 1);
-			}
-			if (Math.abs(this.objects[i].getX()) > 13) {
-				this.objects[i].velocity.x	*= -0.8;
+				continue;
 			}
 		}
+		*/
 		Game.player.update(deltaTime);
 
 		this.lastStamp			= time;
@@ -244,17 +270,23 @@ class Game {
 
 	public input(event: KeyboardEvent): void {
 		switch(event.keyCode) {
+			case(65):
 			case(37): {	//Left
 				Game.player.velocity.x	= -7;
+				Game.player.flipLeft();
 				break;
 			}
+			case(87):
 			case(38): {	//Up
 				break;
 			}
+			case(68):
 			case(39): {	//Right
 				Game.player.velocity.x	= 7;
+				Game.player.flipRight();
 				break;
 			}
+			case(83):
 			case(40): {	//Down
 				break;
 			}

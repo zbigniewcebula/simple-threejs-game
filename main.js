@@ -6,28 +6,33 @@ var Animation = /** @class */ (function () {
         if (duration === void 0) { duration = 1; }
         if (offsetX === void 0) { offsetX = 0; }
         if (offsetY === void 0) { offsetY = 0; }
-        _texture.wrapS = THREE.RepeatWrapping;
-        _texture.wrapT = THREE.RepeatWrapping;
-        _texture.repeat.set(1 / frameAmountX, 1 / frameAmountY);
-        this.texture = _texture;
-        this.texture.needsUpdate = true;
-        this.time = duration;
-        this.timer = 0;
+        this.delay = duration;
+        this.frameTime = 0;
         this.current = 0;
         this.frames = animFrames;
         this.constOffsetX = offsetX / frameAmountX;
         this.constOffsetY = offsetY / frameAmountY;
+        _texture.wrapS = THREE.RepeatWrapping;
+        _texture.wrapT = THREE.RepeatWrapping;
+        _texture.repeat.set(1 / frameAmountX, 1 / frameAmountY);
+        this.texture = _texture;
+        this.dupa = 0;
     }
     Animation.prototype.update = function (deltaTime) {
-        this.timer += deltaTime;
-        if (this.timer > this.time) {
+        //TypeScript tries to sabotage my numbers!!!
+        var dt = deltaTime;
+        if (isNaN(this.frameTime))
+            this.frameTime = 0;
+        //ITs ANNOYING!
+        this.frameTime += dt;
+        if (this.frameTime > this.delay) {
             this.current += 1;
             if (this.current >= this.frames) {
                 this.current = 0;
             }
-            this.timer = 0;
+            this.frameTime = 0;
         }
-        this.texture.offset.x = this.constOffsetX + this.current;
+        this.texture.offset.x = (this.constOffsetX + this.current) / this.frames;
         this.texture.offset.y = this.constOffsetY;
     };
     Animation.prototype.dispose = function () {
@@ -36,10 +41,12 @@ var Animation = /** @class */ (function () {
     return Animation;
 }());
 var GameObject = /** @class */ (function () {
-    function GameObject(animation) {
+    function GameObject(animation, sizeX, sizeY) {
+        if (sizeX === void 0) { sizeX = 1; }
+        if (sizeY === void 0) { sizeY = 1; }
         animation.texture.magFilter = THREE.NearestFilter;
         this.anim = animation;
-        this.plane = new THREE.PlaneGeometry(1, 1, 1, 1);
+        this.plane = new THREE.PlaneGeometry(sizeX, sizeY, 1, 1);
         this.material = new THREE.MeshBasicMaterial({
             color: 0xFFFFFF,
             side: THREE.DoubleSide,
@@ -47,6 +54,7 @@ var GameObject = /** @class */ (function () {
             map: animation.texture
         });
         this.mesh = new THREE.Mesh(this.plane, this.material);
+        this.mesh.name = this.name;
         this.velocity = new THREE.Vector3(0, 0, 0);
         this.gravity = 1;
         this.rotationSpeed = 0;
@@ -83,7 +91,7 @@ var GameObject = /** @class */ (function () {
         this.mesh.setRotationFromEuler(new THREE.Euler(0, 0, this.mesh.rotation.z + angle, 'XYZ'));
     };
     GameObject.prototype.update = function (deltaTime) {
-        this.anim.update(deltaTime);
+        this.anim.update(deltaTime * 1000);
         this.velocity.y -= this.gravity;
         this.mesh.position.add(new THREE.Vector3(this.velocity.x * deltaTime, this.velocity.y * deltaTime, this.velocity.z * deltaTime));
         if (this.rotationSpeed != 0) {
@@ -94,6 +102,12 @@ var GameObject = /** @class */ (function () {
             //this.velocity.y	= (1 - this.torque) * this.velocity.y;
             this.velocity.z = (1 - this.torque) * this.velocity.z;
         }
+    };
+    GameObject.prototype.flipLeft = function () {
+        this.mesh.rotation.y = 3.14;
+    };
+    GameObject.prototype.flipRight = function () {
+        this.mesh.rotation.y = 0;
     };
     GameObject.prototype.dispose = function () {
         this.anim.dispose();
@@ -110,8 +124,8 @@ var Game = /** @class */ (function () {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, this.sizeX / this.sizeY, 0.1, 1000);
         this.renderer = new THREE.WebGLRenderer();
-        Game.player = new GameObject(new Animation(new THREE.TextureLoader().load("char/walk.png"), 4, 4, 1, 100, 0, 0));
-        Game.player.setX(0).setY(0).setZ(-10).setGravity(0);
+        Game.player = new GameObject(new Animation(new THREE.TextureLoader().load("char/walk.png"), 4, 4, 1, 100, 0, 0), 4, 4);
+        Game.player.setX(0).setY(-5).setZ(-10).setGravity(0);
         Game.player.addToScene(this.scene);
         Game.player.torque = 0.2;
         this.objects = new Array();
@@ -141,34 +155,46 @@ var Game = /** @class */ (function () {
     Game.prototype.render = function (timestamp) {
         var time = timestamp / 1000;
         var deltaTime = time - this.lastStamp;
-        for (var i = 0; i < this.objects.length; ++i) {
+        /*
+        for(let i: number = 0; i < this.objects.length; ++i) {
             this.objects[i].update(deltaTime);
+
+            //Debounce
+            if (Math.abs(this.objects[i].getX()) > 13) {
+                this.objects[i].velocity.x	*= -0.8;
+            }
+
             if (this.objects[i].getY() < -10) {
                 this.objects[i].dispose();
                 delete this.objects[i];
                 this.objects.splice(i, 1);
-            }
-            if (Math.abs(this.objects[i].getX()) > 13) {
-                this.objects[i].velocity.x *= -0.8;
+                continue;
             }
         }
+        */
         Game.player.update(deltaTime);
         this.lastStamp = time;
         this.renderer.render(this.scene, this.camera);
     };
     Game.prototype.input = function (event) {
         switch (event.keyCode) {
+            case (65):
             case (37): {
                 Game.player.velocity.x = -7;
+                Game.player.flipLeft();
                 break;
             }
+            case (87):
             case (38): {
                 break;
             }
+            case (68):
             case (39): {
                 Game.player.velocity.x = 7;
+                Game.player.flipRight();
                 break;
             }
+            case (83):
             case (40): {
                 break;
             }
