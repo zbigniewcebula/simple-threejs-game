@@ -1,0 +1,10 @@
+{
+	"scripts": {
+		"start": "node server.js"
+	},
+	"dependencies": {
+		"@types/three": "^0.89.12",
+		"three.js": "^0.77.1",
+		"typescript": "^2.7.2"
+	}
+}
